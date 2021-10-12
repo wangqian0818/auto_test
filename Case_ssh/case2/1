@@ -1,0 +1,51 @@
+#coding:utf-8
+import pytest
+import allure,os
+import sys
+base_path=os.path.dirname(os.path.abspath(__file__))#获取当前项目文件夹
+base_path=base_path.replace('\\','/')
+sys.path.insert(0,base_path)#将当前目录添加到系统环境变量,方便下面导入版本配置等文件
+import fun
+import command
+del sys.path[0]
+sys.path.append('../../')
+from common import logfile
+
+
+class Test_acl():
+
+	@allure.feature('测试1')
+	def test_a1(self):
+		#清空环境
+		print(command.test)
+		for i in command.clear_env:
+			print(i)
+			dd=fun.cmd(i,'gw_c')
+			print(dd)
+		#设置初始环境
+		fun.cmd(command.pre_env[0],'gw_c',thread=1)
+		print('step wait')
+		#执行测试步骤
+		for i in command.case_step_gwc:
+			fun.cmd(i,'gw_c')
+		fun.cmd(command.case_step_c[0],'gw_s',)
+
+		#获取测试结果
+		result=[]
+		for i in command.result_check_gwc:
+			re=fun.cmd(i,'gw_c')
+			result.append(re)
+		#断言
+		for i in result:
+ 			assert command.case_result_gwc[result.index(i)] in i
+		for i in command.result_check_c:
+			re=fun.cmd(i,'gw_c')
+			assert command.case_result_c[result.index(i)] == re
+
+	def teardown(self):
+		#回收环境
+		for i in command.clear_env:
+			fun.cmd(i,'gw_c')
+		for i in fun.mac:
+			fun.ssh_close(i)
+Test_acl().test_a1()
