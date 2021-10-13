@@ -1,0 +1,1 @@
+{"mail_check_file":[],"mail_check_addr":[],"mail_check_subject":[],"mail_check_extend":[],"mail_check_alltype":[],"ftp_check_user":[],"ftp_check_upload":[],"ftp_check_download":[],"ftp_check_alltype":[],"http_check_get":[],"http_check_post":[],"http_check_uri":[],"http_check_get_post_uri":[],"http_check_MIME_allow":[],"http_check_MIME_deny":[],"http_check_get_post_uri_MIME":[]}

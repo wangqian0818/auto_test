@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>测试报告</title>
+    <style>body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	min-width: 1200px;
+	color: #999;
+}
+
+h1 {
+	font-size: 24px;
+	color: black;
+}
+
+h2 {
+	font-size: 16px;
+	color: black;
+}
+
+p {
+    color: black;
+}
+
+a {
+	color: #999;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+
+#environment td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+}
+
+#environment tr:nth-child(odd) {
+	background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed, .passed .col-result {
+	color: green;
+}
+span.skipped, span.xfailed, span.rerun, .skipped .col-result, .xfailed .col-result, .rerun .col-result {
+	color: orange;
+}
+span.error, span.failed, span.xpassed, .error .col-result, .failed .col-result, .xpassed .col-result  {
+	color: red;
+}
+
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+
+#results-table {
+	border: 1px solid #e6e6e6;
+	color: #999;
+	font-size: 12px;
+	width: 100%
+}
+
+#results-table th, #results-table td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+	text-align: left
+}
+#results-table th {
+	font-weight: bold
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+
+.log:only-child {
+	height: inherit
+}
+.log {
+	background-color: #e6e6e6;
+	border: 1px solid #e6e6e6;
+	color: black;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	height: 230px;
+	overflow-y: scroll;
+	padding: 5px;
+	white-space: pre-wrap
+}
+div.image {
+	border: 1px solid #e6e6e6;
+	float: right;
+	height: 240px;
+	margin-left: 5px;
+	overflow: hidden;
+	width: 320px
+}
+div.image img {
+	width: 320px
+}
+.collapsed {
+	display: none;
+}
+.expander::after {
+	content: " (展开详情)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+.collapser::after {
+	content: " (隐藏详情)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+	cursor: pointer;
+}
+
+.sort-icon {
+	font-size: 0px;
+	float: left;
+	margin-right: 5px;
+	margin-top: 5px;
+	/*triangle*/
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+}
+
+.inactive .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #E6E6E6;
+}
+
+.asc.active .sort-icon {
+	/*finish triangle*/
+	border-bottom: 8px solid #999;
+}
+
+.desc.active .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #999;
+}
+</style></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+/*
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);*/
+function add_collapse() {  // modify by linux超
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">显示详情</a> / ' +
+                            '<a href="javascript:hide_all_extras()">隐藏详情</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    toggle_sort_states(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+	// 修改用例报告显示的用例名称 add by linux超
+	var case_name_td = document.getElementsByClassName("col-name");
+		for(var i = 0; i < case_name_td.length; i++)
+			try{
+				case_name_td[i].innerText = case_name_td[i].innerText.split("\[")[1].split("\]")[0];
+			}
+			catch(err){
+				// 如果表格中没有[]会抛异常，如果抛异常我就显示null，如果你想显示别的东西自己改吧，因为通常只要我们使用参数化就有[]显示
+				case_name_td[i].innerText = "测试用例无参数化数据null";
+			}
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+    var multiplier = reversed ? -1 : 1;
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+        return multiplier * (key_a >= key_b ? 1 : -1);
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>[http_check_get]-[10.10.101.47]-[20211013_16-23-51].html</h1>
+    <p>生成报告时间13-Oct-2021 16:25:24 Pytest-Html版本：<a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.22.1.dev11+g4f729c1</p>
+    <h2>测试环境</h2>
+    <table id="environment">
+      <tr>
+        <td>Base URL</td>
+        <td></td></tr>
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;4.5.0&apos;, &apos;py&apos;: &apos;1.10.0&apos;, &apos;pluggy&apos;: &apos;0.13.1&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Windows-10-10.0.18362-SP0</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;allure-pytest&apos;: &apos;2.8.6&apos;, &apos;assume&apos;: &apos;2.4.2&apos;, &apos;base-url&apos;: &apos;1.4.2&apos;, &apos;cov&apos;: &apos;2.10.1&apos;, &apos;forked&apos;: &apos;1.3.0&apos;, &apos;instafail&apos;: &apos;0.4.2&apos;, &apos;metadata&apos;: &apos;1.11.0&apos;, &apos;ordering&apos;: &apos;0.6&apos;, &apos;reportlog&apos;: &apos;0.1.2&apos;, &apos;rerunfailures&apos;: &apos;9.1.1&apos;, &apos;sugar&apos;: &apos;0.9.4&apos;, &apos;xdist&apos;: &apos;2.2.0&apos;, &apos;html&apos;: &apos;1.22.1.dev11+g4f729c1&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.6.6</td></tr>
+      <tr>
+        <td>用例执行时间</td>
+        <td>2021-10-13 16:23:52</td></tr>
+      <tr>
+        <td>设备IP</td>
+        <td>10.10.101.47</td></tr></table>
+    <h2>用例统计</h2>
+    <p>所属部门: 卓讯-合肥测试部</p>
+    <p>测试人员: 王谦</p>
+    <p>【 -------------------------- 网关设备版本号 ----------------------------- 】</p>
+    <p>【 agentjsac-1.1.903-rc.x86_64 】</p>
+    <p>【 driverjsac-1.1.897-rc.x86_64 】</p>
+    <p>【 libhostapi-1.1.897-rc.x86_64 】</p>
+    <p>【 tsthostapi-1.1.897-rc.x86_64 】</p>
+    <p>【 nginx-0.0.472-kernel_rc.x86_64 】</p>
+    <p>执行了2个测试用例, 历时:91.93秒 . </p>
+    <p class="filter" hidden="true">(取消)勾选复选框, 以便筛选测试结果</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">2 通过</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 跳过</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">0 失败</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 错误</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 预期失败</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 预期通过</span>, <input checked="true" class="filter" data-test-result="重跑" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="重跑">0 重跑</span>
+    <h2>测试结果</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">通过/失败</th>
+          <th class="sortable time" col="time">Time</th>
+          <th>Test_nodeId</th>
+          <th class="sortable numeric" col="duration">耗时</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">无测试结果, 试着选择其他测试结果条件</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-time">2021-10-13 08:24:31.990089</td>
+          <td>Case_rbm/http_check_get/function.py::Test_http_check_get::test_http_check_get_a1</td>
+          <td class="col-duration">30.88</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">---------------------------- Captured stdout setup -----------------------------<br/>ssh 连接开始
+ssh连接主机：10.10.101.47  完成!
+ssh服务器: 10.10.101.47连接成功
+export cardid=0&amp;&amp;switch-jsac --set --switch on
+Set successfully.
+
+export cardid=0&amp;&amp;switch-jsac --set --module 12 --switch off
+Set successfully.
+
+export cardid=0&amp;&amp;switch-jsac --set --module 13 --switch off
+Set successfully.
+
+export cardid=0&amp;&amp;switch-jsac --set --module 15 --switch off
+Set successfully.
+
+export cardid=0&amp;&amp;switch-jsac --set --module 16 --switch off
+Set successfully.
+
+export cardid=0&amp;&amp;switch-jsac --set --module 17 --switch off
+Set successfully.
+
+export cardid=0&amp;&amp;defconf  --action forward
+Success.
+
+export cardid=0&amp;&amp;defconf --selabel on
+Success.
+
+export cardid=0&amp;&amp;defconf --cycle 15
+Success.
+
+export cardid=0&amp;&amp;defconf --ipv4aclcycle 30
+Success.
+
+export cardid=0&amp;&amp;defconf --domain off
+Success.
+
+export cardid=0&amp;&amp;defconf --netflow off
+Success.
+
+export cardid=0&amp;&amp;defconf --ipv4acl off
+Success.
+
+export cardid=0&amp;&amp;defconf --syncookie off
+Success.
+
+export cardid=0&amp;&amp;defconf --ckoption off
+Success.
+
+export cardid=0&amp;&amp;defconf --noflow off
+Success.
+
+export cardid=0&amp;&amp;defconf --droperr off
+Success.
+
+export cardid=0&amp;&amp;defconf --tcpmss 0
+Success.
+
+=========================== clear_env 结束 耗时：1.5206575393676758s ==================================
+当前时间为2021-10-13 16:23:54
+第一次获取的结果为：root     233935      1  3 10:09 ?        00:12:46 /usr/bin/agentjsac -c /etc/jsac/agentjsac.config
+root     335051 334905  0 16:23 ?        00:00:00 bash -c ps -ef |grep agentjsac
+root     335059 335051  0 16:23 ?        00:00:00 grep agentjsac
+
+当前时间为2021-10-13 16:23:55
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:41 nginx: master process /usr/local/nginx/sbin/nginx
+root     334605  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334615  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334616  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334617  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334618  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334619  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334620  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334621  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334622  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334623  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334624  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334625  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334633  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334636  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334642  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334643  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334644  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334645  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334646  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334647  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334648  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334649  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334651  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334658  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     335060 334905  0 16:23 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335068 335060  0 16:23 ?        00:00:00 grep nginx
+
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:41 nginx: master process /usr/local/nginx/sbin/nginx
+root     334605  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334615  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334616  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334617  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334618  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334619  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334620  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334621  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334622  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334623  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334624  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334625  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334633  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334636  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334642  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334643  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334644  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334645  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334646  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334647  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334648  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334649  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334651  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334658  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     335085 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335093 335085  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+=========================== data_check_setup_met 结束 耗时：6.369992017745972s ==================================
+----------------------------- Captured stdout call -----------------------------<br/>Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:01
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:41 nginx: master process /usr/local/nginx/sbin/nginx
+root     334605  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334615  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334616  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334617  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334618  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334619  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334620  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334621  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334622  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334623  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334624  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334625  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334633  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334636  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334642  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334643  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334644  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334645  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334646  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334647  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334648  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334649  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334651  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334658  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     335094 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335096 233935  0 16:24 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/nginx_config.py kernel &gt; /dev/null 2&gt;&amp;1
+root     335103 335094  0 16:24 ?        00:00:00 grep nginx
+root     335104 335096  0 16:24 ?        00:00:00 python3.6 /opt/nginx/tools/nginx_config.py kernel
+
+当前时间为2021-10-13 16:24:02
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:41 nginx: master process /usr/local/nginx/sbin/nginx
+root     334605  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334615  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334616  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334617  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334618  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334619  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334620  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334621  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334622  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334623  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334624  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334625  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334633  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334636  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334642  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334643  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334644  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334645  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334646  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334647  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334648  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334649  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334651  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     334658  14986  0 16:23 ?        00:00:00 nginx: worker process
+root     335139 233935  1 16:24 ?        00:00:00 systemctl reload nginx_kernel
+root     335140      1 46 16:24 ?        00:00:00 /usr/local/nginx/sbin/nginx -s reload
+root     335148 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335156 335148  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:44 nginx: master process /usr/local/nginx/sbin/nginx
+root     335167  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335168  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335169  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335177  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335178  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335179  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335180  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335181  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335182  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335183  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335184  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335185  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335186  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335194  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335195  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335196  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335197  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335198  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335199  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335200  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335201  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335202  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335203  14986  4 16:24 ?        00:00:00 nginx: worker process
+root     335204  14986  4 16:24 ?        00:00:00 nginx: worker process
+root     335219 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335227 335219  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:07
+第一次获取的结果为：tcp        0      0 10.10.101.47:2287       0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:20250      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    20942      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:20254      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1068      TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:20242      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1052      TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:20246      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:19490      10.10.101.193:45176     TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1058      TIME_WAIT   -                   
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:20238      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp        0      0 10.10.101.47:20240      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1056      TIME_WAIT   -                   
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+添加策略_re:  tcp        0      0 10.10.101.47:2287       0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:20250      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    20942      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:20254      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1068      TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:20242      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1052      TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:20246      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:19490      10.10.101.193:45176     TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1058      TIME_WAIT   -                   
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:20238      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp        0      0 10.10.101.47:20240      10.10.101.193:21        TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1056      TIME_WAIT   -                   
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:08
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:44 nginx: master process /usr/local/nginx/sbin/nginx
+root     335167  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335168  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335169  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335177  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335178  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335179  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335180  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335181  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335182  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335183  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335184  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335185  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335186  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335194  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335195  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335196  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335197  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335198  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335199  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335200  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335201  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335202  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335203  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335204  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335237 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335239 233935  0 16:24 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/lua_config.py &gt; /dev/null 2&gt;&amp;1
+root     335247 335237  0 16:24 ?        00:00:00 grep nginx
+
+当前时间为2021-10-13 16:24:09
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:45 nginx: master process /usr/local/nginx/sbin/nginx
+root     335167  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335168  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335169  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335177  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335178  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335179  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335180  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335181  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335182  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335183  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335184  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335185  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335186  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335194  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335195  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335196  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335197  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335198  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335199  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335200  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335201  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335202  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335203  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335204  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335255 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335263 335255  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:47 nginx: master process /usr/local/nginx/sbin/nginx
+root     335264  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335265  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335266  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335267  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335268  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335269  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335270  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335271  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335272  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335273  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335274  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335275  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335276  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335277  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335278  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335279  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335280  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335281  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335282  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335283  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335284  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335285  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335286  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335287  14986  2 16:24 ?        00:00:00 nginx: worker process
+root     335290 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335298 335290  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:14
+第一次获取的结果为：{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;123&quot;]
+	}
+}
+需包含字符串： c_get_args
+httpCheck_re:  {
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;123&quot;]
+	}
+}
+当前时间为2021-10-13 16:24:15
+第一次获取的结果为：{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;123&quot;]
+	}
+}
+需包含字符串： 123
+httpCheck_re:  {
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;123&quot;]
+	}
+}
+get请求成功
+get普通请求的请求内容为：You got right!
+---------fun.search: 
+ [&#x27;bind.sh&#x27;, &#x27;export.sh&#x27;, &#x27;version.sh&#x27;, &#x27;run_gw.sh&#x27;, &#x27;switch.sh&#x27;, &#x27;switch2.sh&#x27;]
+get请求成功
+get请求内容不包含黑名单的请求应返回的内容为：You got right!
+get请求内容包含黑名单返回的状态码为：403
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:17
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:47 nginx: master process /usr/local/nginx/sbin/nginx
+root     335264  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335265  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335266  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335267  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335268  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335269  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335270  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335271  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335272  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335273  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335274  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335275  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335276  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335277  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335278  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335279  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335280  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335281  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335282  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335283  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335284  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335285  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335286  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335287  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335320 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335323 233935  0 16:24 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/nginx_config.py kernel &gt; /dev/null 2&gt;&amp;1
+root     335329 335320  0 16:24 ?        00:00:00 grep nginx
+root     335330 335323  0 16:24 ?        00:00:00 python3.6 /opt/nginx/tools/nginx_config.py kernel
+
+当前时间为2021-10-13 16:24:18
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:47 nginx: master process /usr/local/nginx/sbin/nginx
+root     335264  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335265  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335266  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335267  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335268  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335269  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335270  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335271  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335272  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335273  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335274  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335275  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335276  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335277  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335278  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335279  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335280  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335281  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335282  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335283  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335284  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335285  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335286  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335287  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335369 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335377 335369  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:50 nginx: master process /usr/local/nginx/sbin/nginx
+root     335378  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335379  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335380  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335381  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335382  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335384  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335385  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335386  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335387  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335388  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335389  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335390  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335391  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335392  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335393  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335394  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335405  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335406  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335407  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335408  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335409  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335410  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335411  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335412  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335434 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335442 335434  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:23
+第一次获取的结果为：tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    20979      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:2121       10.10.100.136:1068      TIME_WAIT   -                   
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:24
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:50 nginx: master process /usr/local/nginx/sbin/nginx
+root     335378  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335379  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335380  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335381  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335382  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335384  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335385  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335386  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335387  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335388  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335389  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335390  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335391  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335392  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335393  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335394  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335405  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335406  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335407  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335408  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335409  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335410  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335411  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335412  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335459 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335469 335459  0 16:24 ?        00:00:00 grep nginx
+
+当前时间为2021-10-13 16:24:25
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:50 nginx: master process /usr/local/nginx/sbin/nginx
+root     335378  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335379  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335380  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335381  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335382  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335384  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335385  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335386  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335387  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335388  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335389  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335390  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335391  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335392  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335393  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335394  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335405  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335406  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335407  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335408  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335409  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335410  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335411  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335412  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335491  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335492 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335500 335492  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:53 nginx: master process /usr/local/nginx/sbin/nginx
+root     335491  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335501  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335502  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335503  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335504  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335505  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335513  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335514  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335515  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335516  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335517  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335518  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335519  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335520  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335521  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335522  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335530  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335531  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335532  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335533  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335534  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335535  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335536  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335537  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335538 334905  1 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335546 335538  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:30
+第一次获取的结果为：
+</div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-time">2021-10-13 08:25:16.560900</td>
+          <td>Case_rbm/http_check_get/function.py::Test_http_check_get::test_http_check_get_a2</td>
+          <td class="col-duration">31.81</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">---------------------------- Captured stdout setup -----------------------------<br/>当前时间为2021-10-13 16:24:38
+第一次获取的结果为：root     233935      1  3 10:09 ?        00:12:48 /usr/bin/agentjsac -c /etc/jsac/agentjsac.config
+root     335614 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep agentjsac
+root     335622 335614  0 16:24 ?        00:00:00 grep agentjsac
+
+当前时间为2021-10-13 16:24:39
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:55 nginx: master process /usr/local/nginx/sbin/nginx
+root     335570  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335580  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335581  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335582  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335583  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335584  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335585  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335586  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335587  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335588  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335589  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335590  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335591  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335592  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335593  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335594  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335595  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335596  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335597  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335598  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335599  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335600  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335601  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335602  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335623 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335631 335623  0 16:24 ?        00:00:00 grep nginx
+
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:55 nginx: master process /usr/local/nginx/sbin/nginx
+root     335570  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335580  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335581  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335582  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335583  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335584  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335585  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335586  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335587  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335588  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335589  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335590  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335591  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335592  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335593  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335594  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335595  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335596  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335597  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335598  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335599  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335600  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335601  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335602  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335667 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335675 335667  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+=========================== data_check_setup_met 结束 耗时：6.328250169754028s ==================================
+----------------------------- Captured stdout call -----------------------------<br/>Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:44
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:55 nginx: master process /usr/local/nginx/sbin/nginx
+root     335570  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335580  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335581  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335582  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335583  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335584  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335585  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335586  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335587  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335588  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335589  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335590  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335591  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335592  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335593  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335594  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335595  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335596  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335597  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335598  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335599  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335600  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335601  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335602  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335676 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335679 233935  0 16:24 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/nginx_config.py kernel &gt; /dev/null 2&gt;&amp;1
+root     335685 335676  0 16:24 ?        00:00:00 grep nginx
+root     335686 335679  0 16:24 ?        00:00:00 python3.6 /opt/nginx/tools/nginx_config.py kernel
+
+当前时间为2021-10-13 16:24:45
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:56 nginx: master process /usr/local/nginx/sbin/nginx
+root     335570  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335580  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335581  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335582  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335583  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335584  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335585  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335586  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335587  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335588  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335589  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335590  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335591  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335592  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335593  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335594  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335595  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335596  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335597  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335598  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335599  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335600  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335601  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335602  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335730 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335738 335730  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:10:59 nginx: master process /usr/local/nginx/sbin/nginx
+root     335748  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335756  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335757  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335758  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335759  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335760  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335761  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335762  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335763  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335764  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335765  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335766  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335767  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335768  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335769  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335770  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335771  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335772  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335773  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335774  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335775  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335776  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335777  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335778  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335783 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335791 335783  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:51
+第一次获取的结果为：tcp        0      0 10.10.101.47:2287       0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    20979      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+tcp        0      0 10.10.101.47:2287       0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    20979      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:24:52
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:59 nginx: master process /usr/local/nginx/sbin/nginx
+root     335748  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335756  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335757  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335758  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335759  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335760  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335761  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335762  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335763  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335764  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335765  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335766  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335767  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335768  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335769  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335770  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335771  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335772  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335773  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335774  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335775  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335776  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335777  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335778  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335801 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335803 233935  0 16:24 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/lua_config.py &gt; /dev/null 2&gt;&amp;1
+root     335809 335803  0 16:24 ?        00:00:00 python3.6 /opt/nginx/tools/lua_config.py
+root     335811 335801  0 16:24 ?        00:00:00 grep nginx
+
+当前时间为2021-10-13 16:24:53
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:10:59 nginx: master process /usr/local/nginx/sbin/nginx
+root     335748  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335756  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335757  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335758  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335759  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335760  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335761  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335762  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335763  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335764  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335765  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335766  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335767  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335768  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335769  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335770  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335771  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335772  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335773  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335774  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335775  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335776  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335777  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335778  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335819 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335827 335819  0 16:24 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:11:02 nginx: master process /usr/local/nginx/sbin/nginx
+root     335828  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335829  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335830  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335831  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335832  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335833  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335834  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335835  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335836  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335837  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335838  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335839  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335840  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335841  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335842  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335843  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335844  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335845  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335846  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335847  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335848  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335849  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335850  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335851  14986  1 16:24 ?        00:00:00 nginx: worker process
+root     335854 334905  0 16:24 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335862 335854  0 16:24 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:24:58
+第一次获取的结果为：{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+当前时间为2021-10-13 16:24:59
+第一次获取的结果为：{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+当前时间为2021-10-13 16:25:00
+第一次获取的结果为：{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+{
+	&quot;c_get_args&quot;:	{
+		&quot;w&quot;:	0,
+		&quot;k&quot;:	[&quot;test&quot;, &quot;juson&quot;]
+	}
+}
+get请求成功
+多个黑名单时get普通请求的请求内容为：You got right!
+get请求成功
+多个黑名单时get请求内容不包含黑名单的请求应返回的内容为：You got right!
+多个黑名单时get请求内容包含第一个黑名单返回的状态码为：403
+多个黑名单时get请求内容包含第二个黑名单返回的状态码为：403
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:25:01
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:11:02 nginx: master process /usr/local/nginx/sbin/nginx
+root     335828  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335829  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335830  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335831  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335832  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335833  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335834  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335835  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335836  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335837  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335838  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335839  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335840  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335841  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335842  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335843  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335844  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335845  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335846  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335847  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335848  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335849  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335850  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335851  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335899 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335900 233935  0 16:25 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/nginx_config.py kernel &gt; /dev/null 2&gt;&amp;1
+root     335904 335900  0 16:25 ?        00:00:00 python3.6 /opt/nginx/tools/nginx_config.py kernel
+root     335909 335899  0 16:25 ?        00:00:00 grep nginx
+
+当前时间为2021-10-13 16:25:02
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:11:02 nginx: master process /usr/local/nginx/sbin/nginx
+root     335828  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335829  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335830  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335831  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335832  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335833  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335834  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335835  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335836  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335837  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335838  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335839  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335840  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335841  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335842  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335843  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335844  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335845  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335846  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335847  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335848  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335849  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335850  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335851  14986  0 16:24 ?        00:00:00 nginx: worker process
+root     335953 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     335961 335953  0 16:25 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:11:05 nginx: master process /usr/local/nginx/sbin/nginx
+root     335969  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335970  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335971  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335972  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335973  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335974  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335975  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335976  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335984  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335985  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335986  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335987  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335988  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335989  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335990  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335991  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335992  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335993  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336001  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336002  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336003  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336004  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336005  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336006  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336021 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     336029 336021  0 16:25 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:25:08
+第一次获取的结果为：tcp        0      0 0.0.0.0:20022           0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      12583/sshd: /usr/sb 
+tcp        0      0 0.0.0.0:8088            0.0.0.0:*               LISTEN      14986/nginx: master 
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      13049/master        
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      12540/zabbix_agentd 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1222      ESTABLISHED 334905/sshd: root@n 
+tcp    21016      0 10.10.101.47:44248      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:20876     ESTABLISHED 303367/sshd: root@p 
+tcp        0      0 10.10.101.47:44264      10.10.88.32:5671        ESTABLISHED 233935/agentjsac    
+tcp        0      0 10.10.101.47:22         10.10.100.136:1101      ESTABLISHED 249824/sshd: root@p 
+tcp        0      0 192.168.80.47:22        192.168.80.29:22044     ESTABLISHED 239597/sshd: root@p 
+tcp        0      0 10.10.101.47:22         10.10.100.136:1590      ESTABLISHED 327847/sshd: root@p 
+tcp6       0      0 :::20022                :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 :::22                   :::*                    LISTEN      12583/sshd: /usr/sb 
+tcp6       0      0 ::1:25                  :::*                    LISTEN      13049/master        
+tcp6       0      0 :::10050                :::*                    LISTEN      12540/zabbix_agentd 
+
+Rabbitmq服务器连接: 10.10.88.32:5671 成功.
+向Rabbitmq发送信息成功!
+Domain值为: hf.f1203.g01.xn_17.gw47的Rabbitmq信息接收线程已开启!
+当前时间为2021-10-13 16:25:09
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:11:05 nginx: master process /usr/local/nginx/sbin/nginx
+root     335969  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335970  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335971  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335972  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335973  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335974  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335975  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335976  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335984  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335985  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     335986  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335987  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335988  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335989  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335990  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335991  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335992  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335993  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336001  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336002  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336003  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336004  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336005  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336006  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336039 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     336040 233935  0 16:25 ?        00:00:00 sh -c python3.6 /opt/nginx/tools/lua_config.py &gt; /dev/null 2&gt;&amp;1
+root     336049 336039  0 16:25 ?        00:00:00 grep nginx
+
+当前时间为2021-10-13 16:25:10
+第一次获取的结果为：root      14986      1  0 Oct12 ?        00:11:05 nginx: master process /usr/local/nginx/sbin/nginx
+root     335969  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335970  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335971  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335972  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335973  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335974  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335975  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335976  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335984  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335985  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335986  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335987  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335988  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335989  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335990  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335991  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335992  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     335993  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336001  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336002  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336003  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336004  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336005  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336006  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336064 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     336066  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336073 336064  0 16:25 ?        00:00:00 grep nginx
+
+Domain值为: hf.f1203.g01.xn_17.gw47 的Rabbitmq信息接收管道关闭成功!
+这是进程的第1次等待
+root      14986      1  0 Oct12 ?        00:11:08 nginx: master process /usr/local/nginx/sbin/nginx
+root     336066  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336074  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336075  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336076  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336077  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336078  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336079  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336080  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336081  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336082  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336083  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336084  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336085  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336086  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336087  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336088  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336089  14986  0 16:25 ?        00:00:00 nginx: worker process
+root     336090  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336091  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336092  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336093  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336094  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336095  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336096  14986  1 16:25 ?        00:00:00 nginx: worker process
+root     336097 334905  0 16:25 ?        00:00:00 bash -c ps -ef |grep nginx
+root     336105 336097  0 16:25 ?        00:00:00 grep nginx
+
+当前有24个进程启动成功
+24个进程全部启动成功
+当前时间为2021-10-13 16:25:15
+第一次获取的结果为：
+</div></td></tr></tbody></table></body></html>

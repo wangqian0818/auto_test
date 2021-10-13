@@ -6,6 +6,10 @@
 修订人：李皖秋
 修订时间：2021/07/22
 修订内容：增加函数get_nginx_worker，获取nginx的子进程id
+
+修订人：王谦
+修订时间：2021/09/02
+修订内容：新增方法：get_db_num()，通过数据库 查询某张表存在的策略条数
 '''
 # encoding='utf-8'
 try:
@@ -168,7 +172,7 @@ def pid_kill(content, process='python', non_content='bash', gw='s'):
 
 
 def iperf_kill():
-    # 判断抓包程序是否停止，如果进程还在则停止
+    # 判断iperf程序是否停止，如果进程还在则停止
     pid = cmd(f'ps -ef | grep iperf3 | grep {qos_port}', 's')
     print(pid)
     if ('iperf3' in pid):
@@ -177,7 +181,7 @@ def iperf_kill():
         print(pid)
         cmd("kill -9 %s" % pid, "s")
 
-
+#针对selabel模块获取category字段
 def cipso_category(a, b):
     value = ''
     for i in range(a, b):
@@ -186,16 +190,16 @@ def cipso_category(a, b):
             return value
 
 
-def pkt_scp(scp_name, scp_dip):  # 上传命令
+def pkt_scp(scp_name, scp_dip):  # scp上传命令
     scp_pkt = f"sshpass -p {info.serverPwd} scp /opt/pkt/%s root@%s:/opt/pkt" % (scp_name, scp_dip)
     return scp_pkt
 
 
-def pkt_wget(wget_name, wget_dip):
+def pkt_wget(wget_name, wget_dip): #wget命令
     wget_pkt = "wget %s /opt/pkt/%s" % (wget_name, wget_dip)
     return wget_pkt
 
-
+#获取qos打流的速率
 def qos_speed(file, s_txt, qbucket='p'):
     with open(file, 'w') as f:
         f.write(s_txt)
@@ -219,7 +223,7 @@ def qos_speed(file, s_txt, qbucket='p'):
         s_speed = result1.split()[5]
         return s_speed
 
-
+#判断当前配置是否存在或不存在
 def wait_data(command, device, context, name='进程', number=300, timeout=0.1, flag='存在'):
     print('当前时间为{}'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     a = cmd(command, device)
@@ -250,7 +254,7 @@ def wait_data(command, device, context, name='进程', number=300, timeout=0.1, 
                 return 0
     return a
 
-
+#判断nginx的进程是否是24个，即判断nginx进程启动是否成功
 def nginx_worker(command, device, context, non_context1='nginx: worker process is shutting down',
                  non_context2='systemctl reload nginx_kernel', name='进程', number=300, timeout=0.1):
     print('当前时间为{}'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
@@ -285,7 +289,7 @@ def nginx_worker(command, device, context, non_context1='nginx: worker process i
             break
     return res
 
-
+#用于获取nginx子进程的id号，返回值为列表格式
 def get_nginx_worker(str, split_str='root', context='worker', non_context='nginx: worker process is shutting down'):
     resultList = []
     list = str.split(split_str)
@@ -296,7 +300,7 @@ def get_nginx_worker(str, split_str='root', context='worker', non_context='nginx
             resultList.append(workerID)
     return resultList
 
-
+#获取设备版本号，并写入到文件dut_version.txt
 def get_dut_version(case):
     print('获取设备版本号，并写入到文件dut_version.txt')
     result_file = base_path + r'/auto_test/dut_version.txt'
@@ -374,3 +378,27 @@ def get_dut_version(case):
             assert re is not None, '查询 nginx 失败'
             file.write(re)
             ssh_gw.close()
+
+
+'''
+通过数据库 查询某张表存在的策略条数
+使用的shell脚本：jsac-read-db-num.sh，在之前查库的脚本（jsac-read-db.sh）上做了修改，使用该功能需要添加该脚本，脚本可以在SVN下载
+默认查询前置机的ACL策略数
+'''
+def get_db_num(dut='FrontDut', db='ipv4acl'):
+    # 通过 tupleacl --get  查询当前存在的策略条数
+    # ori_acl_re = fun.cmd('tupleacl --get', 'FrontDut')
+    # print('命令_{} 的返回值: \n{}\n-------------------------------------------------'.format(
+    #     'tupleacl --get', ori_acl_re))
+    # exist_policy_num = int(ori_acl_re.split('\n')[0].split(' ')[1])
+
+    # 通过数据库 检查该表存在的策略条数
+    try:
+        commond = '/usr/local/bin/jsac-read-db-num.sh /etc/jsac/agentjsac.new.db ' + db
+        res = cmd(commond, dut)
+        # print('命令_{} 的返回值: \n{}\n-------------------------------------------------'.format(cmd, res))
+        exist_policy_num = int(res[-1])
+    except Exception as err:
+        print('需要检查设备(如果是隔离设备只需要检查前置机)是否存在脚本/usr/local/bin/jsac-read-db-num.sh\n命令执行错误，报错消息为：{}\n'.format(err))
+        exit(0)
+    return exist_policy_num

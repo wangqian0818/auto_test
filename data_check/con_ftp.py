@@ -36,6 +36,7 @@ def connect_ftp(host, port, username, password):
     return fp
 
 
+#上传文件到ftp上
 def uploadFile(fp, remotePath, localPath):
     try:
 
@@ -128,7 +129,7 @@ def DownDir(fp, RemoteDir, LocalDir):
         print('Error:', e)
         return 0
 
-
+#从ftp上下载文件
 def downFile(fp, remotePath, localPath):
     bufsize = 1024  # 设置的缓冲区大小
 
@@ -164,7 +165,7 @@ def checkFileDir(ftp,file_name):
         else:
             return "Unknow"
 
-
+#删除目录下的所有文件（文件夹不删除，直接跳过）
 def deleallFile(fp, Path, filename=None):
     try:
         try:
@@ -206,17 +207,17 @@ def deleallFile(fp, Path, filename=None):
 
 
 if __name__ == '__main__':
-    host = '192.168.30.13'
-    port = 2121
+    host = '192.168.30.54'
+    port = 8887
     username = 'test'
     password = '1q2w3e'
     # path = '/ftp_李皖秋/ftp_del'
     # filename = 'utmp2log-0.0.22.tar.gz'
     upremotePath = '/home/ftp/ftp_auto/10G.txt'
-    uplocalPath = 'C:/Users/admin/Desktop/work/10G.txt'
+    uplocalPath = 'C:/Users/admin/Desktop/10G.txt'
 
-    downremotePath = '/home/ftp/ftp_auto/1.txt'
-    downlocalPath = 'C:/Users/admin/Desktop/work/1.txt'
+    downremotePath = '/home/ftp/ftp_auto/10G.txt'
+    downlocalPath = 'C:/Users/admin/Desktop/10G.txt'
 
     localDir = 'C:/Users/admin/Desktop/work/uploadDir'
     remoteDir = '/ly'
@@ -224,16 +225,15 @@ if __name__ == '__main__':
     fp = connect_ftp(host, port, username, password)
     print('欢迎语是：{}'.format(fp.getwelcome()))
     assert '220' in fp.getwelcome()
-    # print(fp)
-    path = '/home/ftp/ftp_auto/ftp_del/wq_test.txt'
-    result = deleallFile(fp, path)
-    print(result)
+    print(fp)
+    # result = deleallFile(fp, path)
+    # print(result)
 
     # result = uploadFile(fp, upremotePath, uplocalPath)
     # print(result)
     # result = downFile(fp, downremotePath, downlocalPath)
-    # result = uploadFileAll(fp,localDir)
-    # print(result)
+    result = uploadFileAll(fp,localDir)
+    print(result)
     # result2 = DownDir(fp,remoteDir, localDir)
     # print(result2)
 

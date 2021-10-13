@@ -124,10 +124,11 @@ class Test_mss():
         # 读包
         read_cmd = fun.mss_read(read_name2, read_id)
         read_re2 = fun.cmd(read_cmd, 's')
-        print(read_re2)
+        print("read_re2: ", read_re2)
 
         # 获取期望结果
         exp2 = self.pkt1_cfg["expect2"][0]
+        print('exp2: ', exp2)
         assert exp2 == read_re2
 
         # 清空还原环境

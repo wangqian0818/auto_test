@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
 
-# 封装一个方法直接传入邮件标题和内容
+# 封装一个方法直接传入邮件标题和内容，发送邮件
 def post_email(sender, receivers, cc_list, bcc_list, mail_host, mail_port, mail_user, mail_pass, attach_path, file, title, context, cc_flag=0,part_flag=0):
     # 三个参数：第一个为文本内容，第二个 plain 设置文本格式，第三个 utf-8 设置编码
     msg = MIMEMultipart()

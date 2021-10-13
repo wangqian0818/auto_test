@@ -130,17 +130,17 @@ def http_upload(remote_path, filename, filepath, MIME_type):
 
 
 if __name__ == '__main__':
-    url = 'http://192.168.30.13:2287'
+    url = 'http://192.168.30.54:2287'
     # data1 = "abc"
     # data = {'data': 'test'}
     # # path = 'C:/Users/admin/Desktop/1.html'
     # #指定content-type类型是post的上传功能，post的下载只能是放在uri的后缀curl http://10.10.88.9:2286/1.pdf -v
     # #MIME类型主要是限制用户下载的内容，请求MIME类型只能是get请求，post对请求文件没有动态处理能力，只有请求.php文件才可以进行处理
     # # headers = {'Content-Type': 'application/txt'}
-    # a=http_get(url,flag=1)
-    content = http_get(url)
+    a=http_get(url,flag=1)
+    # content = http_get(url)
     # b=http_post(url)
-    print(content)
+    # # print(content)
     # print(b)
     # fileUrl = 'http://10.10.88.146:80/10G.txt'
     # file_localpath = 'C:/Users/admin/Desktop/10G.txt'

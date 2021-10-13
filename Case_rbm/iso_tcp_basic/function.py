@@ -1,41 +1,42 @@
-# encoding='utf-8'
+#encoding='utf-8'
 try:
-    import os, sys, pytest, allure, time, re, time
+	import os,sys,pytest,allure,time,re,time
 except Exception as err:
-    print('导入CPython内置函数库失败!错误信息如下:')
-    print(err)
-    sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
+	print('导入CPython内置函数库失败!错误信息如下:')
+	print(err)
+	sys.exit(0)#避免程序继续运行造成的异常崩溃,友好退出程序
 
-base_path = os.path.dirname(os.path.abspath(__file__))  # 获取当前项目文件夹
-base_path = base_path.replace('\\', '/')
-sys.path.insert(0, base_path)  # 将当前目录添加到系统环境变量,方便下面导入版本配置等文件
+base_path=os.path.dirname(os.path.abspath(__file__))#获取当前项目文件夹
+base_path=base_path.replace('\\','/')
+sys.path.insert(0,base_path)#将当前目录添加到系统环境变量,方便下面导入版本配置等文件
 print(base_path)
 try:
-    from iso_tcp_basic import index
-    from iso_tcp_basic import message
-    from common import fun
-    import common.ssh as c_ssh
+	from iso_tcp_basic import index
+	from iso_tcp_basic import message
+	from common import fun
+	import common.ssh as c_ssh
 except Exception as err:
-    print(
-        '导入基础函数库失败!请检查相关文件是否存在.\n文件位于: ' + str(base_path) + '/common/ 目录下.\n分别为:pcap.py  rabbitmq.py  ssh.py\n错误信息如下:')
-    print(err)
-    sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
+	print(
+		'导入基础函数库失败!请检查相关文件是否存在.\n文件位于: ' + str(base_path) + '/common/ 目录下.\n分别为:pcap.py  rabbitmq.py  ssh.py\n错误信息如下:')
+	print(err)
+	sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
 else:
-    del sys.path[0]  # 及时删除导入的环境变量,避免重复导入造成的异常错误
+	del sys.path[0]  # 及时删除导入的环境变量,避免重复导入造成的异常错误
 # import index
 # del sys.path[0]
-# dir_dir_path=os.path.abspath(os.path.join(os.getcwd()))
-# sys.path.append(os.getcwd())
+#dir_dir_path=os.path.abspath(os.path.join(os.getcwd()))
+#sys.path.append(os.getcwd())
 
-from common import baseinfo
 from common import clr_env
+from common import baseinfo
 from common.rabbitmq import *
+from data_check import send_smtp
+from data_check import recv_pop3
 from data_check import con_ftp
 from data_check import http_check
-from data_check import recv_pop3
-from data_check import send_smtp
 
-datatime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+
+datatime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 
 FrontDomain = baseinfo.BG8010FrontDomain
 BackDomain = baseinfo.BG8010BackDomain
@@ -43,9 +44,8 @@ proxy_ip = baseinfo.BG8010FrontOpeIp
 rbmExc = baseinfo.rbmExc
 http_url = index.http_url
 http_content = baseinfo.http_content
-BG8010ServerPwd = baseinfo.BG8010ServerPwd
+BG8010ServerPwd =baseinfo.BG8010ServerPwd
 ssh_proxy_port = baseinfo.ssh_proxy_port
-
 
 class Test_iso_tcp_basic():
 
@@ -105,7 +105,7 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.addsmtp_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addsmtp_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res1 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res1 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res1 == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
         back_res1 = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
@@ -131,8 +131,8 @@ class Test_iso_tcp_basic():
 
         # 发送邮件，检测隔离代理是否生效
         result = send_smtp.post_email(self.mail_sender, self.mail_receivers, self.mail_cc, self.mail_bcc,
-                                      self.mail_host, self.mail_port, self.mail_user, self.mail_pass,
-                                      self.attach_path, self.file, self.title, self.context, 0, 0)
+                                       self.mail_host, self.mail_port, self.mail_user, self.mail_pass,
+                                       self.attach_path, self.file, self.title, self.context, 0, 0)
         print('隔离下的邮件代理结果为:{}'.format(result))
         assert result == 1
 
@@ -147,24 +147,25 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.delsmtp_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.delsmtp_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res1 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res1 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res1 == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res1 = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res1 = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res1 == 1
         fun.send(rbmExc, message.delpop3_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.delpop3_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res2 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res2 = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res2 == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res2 = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res2 = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res2 == 1
         # 检查策略移除是否成功
         for key in self.case1_step1:
-            re = fun.wait_data(self.case1_step1[key][0], 'FrontDut', self.case1_step1[key][1], '配置', 100, flag='不存在')
+            re = fun.wait_data(self.case1_step1[key][0], 'FrontDut', self.case1_step1[key][1], '配置', 100,flag='不存在')
             print(re)
             assert self.case1_step1[key][1] not in re
+
 
     # @pytest.mark.skip(reseason="skip")
     @allure.feature('验证隔离下的ftp传输策略')
@@ -174,10 +175,10 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.addftp_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addftp_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert back_res == 1
         # 检查配置下发是否成功
         for key in self.case2_step1:
@@ -190,8 +191,8 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case2_step11[key][1] in re
 
+
         # 登录ftp服务器，下载文件
-        print('----------', proxy_ip, self.ftp_proxy_port, self.ftp_user, self.ftp_pass)
         fp = con_ftp.connect_ftp(proxy_ip, self.ftp_proxy_port, self.ftp_user, self.ftp_pass)
         print('欢迎语是：{}'.format(fp.getwelcome()))
         result = con_ftp.downFile(fp, self.case2_downremotePath, self.case2_downlocalPath)
@@ -202,10 +203,10 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.delftp_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.delftp_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res == 1
         # 检查策略移除是否成功
         for key in self.case2_step1:
@@ -221,10 +222,10 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.addtcp_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addtcp_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert back_res == 1
         # 检查配置下发是否成功
         for key in self.case3_step1:
@@ -247,10 +248,10 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.deltcp_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.deltcp_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res == 1
         # 检查策略移除是否成功
         for key in self.case3_step1:
@@ -266,15 +267,15 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.addtcp_ssh_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addtcp_ssh_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert back_res == 1
         # 检查配置下发是否成功
         for key in self.case4_step1:
             re = fun.wait_data(self.case4_step1[key][0], 'FrontDut', self.case4_step1[key][1], '配置', 100)
-            print('re是{},self.case4_step1[key][1]是{}'.format(re, self.case4_step1[key][1]))
+            print('re是{},self.case4_step1[key][1]是{}'.format(re,self.case4_step1[key][1]))
             assert self.case4_step1[key][1] in re
 
         for key in self.case4_step11:
@@ -282,12 +283,11 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case4_step11[key][1] in re
 
-        # 在server的/opt/pkt/路径下创建一个10M大小的文件10M.txt
-        fun.cmd('cd /opt/pkt && dd if=/dev/zero of=10M.txt bs=1M count=10', 'BG8010Server')
+        #在server的/opt/pkt/路径下创建一个10M大小的文件10M.txt
+        touch_file_cmd = ['cd /opt/pkt','dd if=/dev/zero of=10M.txt bs=1M count=10']
+        fun.cmd(touch_file_cmd,'BG8010Server',list_flag=True)
 
-        # 创建文件可能还需要等一会儿
-        time.sleep(5)
-        # 检查服务端文件是否创建成功
+        #检查服务端文件是否创建成功
         touch_file = fun.search('/opt/pkt', 'txt', 'BG8010Server')
         print('检查服务端/opt/pkt/目录下所有以txt结尾的文件列表为：{}'.format(touch_file))
         assert '10M.txt' in touch_file
@@ -297,12 +297,12 @@ class Test_iso_tcp_basic():
         print('scp下载的命令为：{}'.format(scp_cmd))
         fun.cmd(scp_cmd, 'BG8010Client')
 
-        # 检查文件是否下载成功到客户端
+        #检查文件是否下载成功到客户端
         touch_file = fun.search('/opt/pkt', 'txt', 'BG8010Client')
         print('检查客户端/opt/pkt/目录下所有以txt结尾的文件列表为：{}'.format(touch_file))
         assert '10M.txt' in touch_file
 
-        # 下载完成后，还原环境，清掉客户端下载的文件
+        #下载完成后，还原环境，清掉客户端下载的文件
         fun.cmd('rm -f /opt/pkt/10M.txt ', 'BG8010Client')
         check_file = fun.search('/opt/pkt', 'txt', 'BG8010Client')
         print('还原环境，10M.txt文件应该不在列表内，列表为{}'.format(check_file))
@@ -311,10 +311,10 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.deltcp_ssh_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.deltcp_ssh_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res == 1
         # 检查策略移除是否成功
         for key in self.case4_step1:
@@ -330,7 +330,7 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.addtcp_ssh_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addtcp_ssh_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
         back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
@@ -347,7 +347,8 @@ class Test_iso_tcp_basic():
             assert self.case5_step11[key][1] in re
 
         # 在客户端的/opt/pkt/路径下创建一个10M大小的文件10M.pdf
-        fun.cmd('cd /opt/pkt && dd if=/dev/zero of=10M.pdf bs=1M count=10', 'BG8010Client')
+        touch_file_cmd = ['cd /opt/pkt', 'dd if=/dev/zero of=10M.pdf bs=1M count=10']
+        fun.cmd(touch_file_cmd, 'BG8010Client', list_flag=True)
 
         # 检查客户端文件是否创建成功
         touch_file = fun.search('/opt/pkt', 'pdf', 'BG8010Client')
@@ -373,16 +374,17 @@ class Test_iso_tcp_basic():
         fun.send(rbmExc, message.deltcp_ssh_front['DelCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.deltcp_ssh_back['DelCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        fdel_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert fdel_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        bdel_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert bdel_res == 1
         # 检查策略移除是否成功
         for key in self.case5_step1:
             re = fun.wait_data(self.case5_step1[key][0], 'FrontDut', self.case5_step1[key][1], '配置', 100, flag='不存在')
             print(re)
             assert self.case5_step1[key][1] not in re
+
 
     def teardown_class(self):
         # 回收环境

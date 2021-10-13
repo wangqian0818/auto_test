@@ -8,7 +8,7 @@ datatime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 vlanA = str(baseinfo.vlanA)
 vlanB = str(baseinfo.vlanB)
 vlanIfname = baseinfo.gwVlanIfname
-gwOtherIfname = baseinfo.gwOtherIfname
+# gwOtherIfname = baseinfo.gwOtherIfname
 vlanCard = baseinfo.gwVlanCard
 
 setvlan_right = {

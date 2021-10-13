@@ -101,8 +101,6 @@ class Test_iso_ftp_large_file():
         # 登录ftp服务器，下载一个10G大小的文件
         fp = con_ftp.connect_ftp(proxy_ip, self.ftp_proxy_port, self.ftp_user, self.ftp_pass)
         print('欢迎语是：{}'.format(fp.getwelcome()))
-        print('self.case2_downremotePath, self.case2_downlocalPath', self.case2_downremotePath,
-              self.case2_downlocalPath)
         result = con_ftp.downFile(fp, self.case2_downremotePath, self.case2_downlocalPath)
         print('ftp走隔离下载一个10G大小的文件结果为:{}'.format(result))
         assert result == 1

@@ -8,8 +8,7 @@ ssh_proxy_port = baseinfo.ssh_proxy_port
 http_ip = proxy_ip + ':' + str(http_proxy_port)
 ssh_ip = proxy_ip + ':' + str(ssh_proxy_port)
 
-# remote_downfile = '10G.txt'
-remote_downfile = '100M.txt'    # 10G 太大了，上传下载失败，换成100M
+remote_downfile = '10G.txt'
 downfile_url = 'http://' + proxy_ip + ':' + str(http_proxy_port) + '/' + remote_downfile
 downlocalPath = baseinfo.http_downlocalPath + remote_downfile
 

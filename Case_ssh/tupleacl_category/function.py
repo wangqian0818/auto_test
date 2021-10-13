@@ -107,6 +107,7 @@ class Test_tupleacl_category():
 
         # 发送报文
         send_cmd = fun.pkt_send(c_iface, c_num, c_pcap)
+        print('send_cmd:', send_cmd)
         fun.cmd(send_cmd, 'c')
 
         # 检查报文是否存在
@@ -115,11 +116,13 @@ class Test_tupleacl_category():
 
         # 读包
         read_cmd = fun.pkt_read(read_name, read_id)
+        print('read_cmd: {}'.format(read_cmd))
         read_re = fun.cmd(read_cmd, 's')
-        print('read_re: ', read_re)
+        print('read_re: '.format(read_re))
 
         # 获取期望结果
         exp = self.pkt1_cfg["expect"][0]
+        print('期望值为: {}'.format(exp))
         assert exp == read_re
 
     # @pytest.mark.skip(reseason="skip")
@@ -147,6 +150,7 @@ class Test_tupleacl_category():
 
         # 发送报文
         send_cmd = fun.pkt_send(c_iface, c_num, c_pcap)
+        print('send_cmd: ', send_cmd)
         fun.cmd(send_cmd, 'c')
 
         # 检查报文是否存在

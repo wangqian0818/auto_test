@@ -71,10 +71,10 @@ class Test_iso_udp():
         fun.send(rbmExc, message.addudp_dns_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addudp_dns_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
+        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
         assert back_res == 1
         # 检查配置下发是否成功
         for key in self.case1_step1:

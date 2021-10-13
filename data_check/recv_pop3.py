@@ -11,7 +11,7 @@ from email.parser import Parser
 from email.header import decode_header
 from email.utils import parseaddr
 
-
+#获取pop3服务器里最新的一封邮件内容
 def get_email(email,password,pop3_server_host,pop3_server_port):
     try:
         # 链接到POP3服务器
