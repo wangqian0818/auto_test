@@ -97,7 +97,7 @@ class Test_iso_tcp_basic():
         clr_env.iso_setup_class(dut='FrontDut')
         clr_env.iso_setup_class(dut='BackDut')
 
-    @pytest.mark.skip(reseason="skip")
+    # @pytest.mark.skip(reseason="skip")
     @allure.feature('验证隔离下的邮件代理策略')
     def test_iso_tcp_basic_a1(self):
 
@@ -191,6 +191,7 @@ class Test_iso_tcp_basic():
             assert self.case2_step11[key][1] in re
 
         # 登录ftp服务器，下载文件
+        print('----------', proxy_ip, self.ftp_proxy_port, self.ftp_user, self.ftp_pass)
         fp = con_ftp.connect_ftp(proxy_ip, self.ftp_proxy_port, self.ftp_user, self.ftp_pass)
         print('欢迎语是：{}'.format(fp.getwelcome()))
         result = con_ftp.downFile(fp, self.case2_downremotePath, self.case2_downlocalPath)
@@ -212,7 +213,7 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case2_step1[key][1] not in re
 
-    @pytest.mark.skip(reseason="skip")
+    # @pytest.mark.skip(reseason="skip")
     @allure.feature('验证隔离下的tcp策略（http）')
     def test_iso_tcp_basic_a3(self):
 
@@ -257,7 +258,7 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case3_step1[key][1] not in re
 
-    @pytest.mark.skip(reseason="skip")
+    # @pytest.mark.skip(reseason="skip")
     @allure.feature('验证隔离下的tcp策略（ssh、scp）下载文件')
     def test_iso_tcp_basic_a4(self):
 
@@ -321,7 +322,7 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case4_step1[key][1] not in re
 
-    @pytest.mark.skip(reseason="skip")
+    # @pytest.mark.skip(reseason="skip")
     @allure.feature('验证隔离下的tcp策略（ssh、scp）上传文件')
     def test_iso_tcp_basic_a5(self):
 
@@ -383,15 +384,15 @@ class Test_iso_tcp_basic():
             print(re)
             assert self.case5_step1[key][1] not in re
 
-    # def teardown_class(self):
-    #     # 回收环境
-    #     clr_env.iso_teardown_met('mail', base_path)
-    #     clr_env.iso_teardown_met('ftp', base_path)
-    #     clr_env.iso_teardown_met('tcp_http', base_path)
-    #     clr_env.iso_teardown_met('ssh', base_path)
-    #     clr_env.iso_setup_class(dut='FrontDut')
-    #     clr_env.iso_setup_class(dut='BackDut')
-    #
-    #     fun.rbm_close()
-    #     fun.ssh_close('FrontDut')
-    #     fun.ssh_close('BackDut')
+    def teardown_class(self):
+        # 回收环境
+        clr_env.iso_teardown_met('mail', base_path)
+        clr_env.iso_teardown_met('ftp', base_path)
+        clr_env.iso_teardown_met('tcp_http', base_path)
+        clr_env.iso_teardown_met('ssh', base_path)
+        clr_env.iso_setup_class(dut='FrontDut')
+        clr_env.iso_setup_class(dut='BackDut')
+
+        fun.rbm_close()
+        fun.ssh_close('FrontDut')
+        fun.ssh_close('BackDut')

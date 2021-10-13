@@ -1,6 +1,0 @@
-
---------------------- 开始执行 case：E:/Projects_Py/auto_test/Case_rbm/iso_udp/function.py
-result: test_iso_udp_a1 -- failed		20210929_15-36-24
---------------------- 执行结束 case：E:/Projects_Py/auto_test/Case_rbm/iso_udp/function.py
-
-

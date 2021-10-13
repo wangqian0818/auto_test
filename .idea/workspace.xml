@@ -2,9 +2,27 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="897297d1-6b21-4ac2-82c8-f8b9f6cdac3a" name="默认更改列表" comment="">
-      <change afterPath="$PROJECT_DIR$/common/baseinfo_54_57.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_http_check_post]-[10.10.101.47]-[20211013_15-35-27]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_http_check_uri]-[10.10.101.47]-[20211013_15-38-56]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_http_large_file]-[10.10.101.47]-[20211013_15-42-25]-[failed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_http_redirect]-[10.10.101.47]-[20211013_15-45-04]-[failed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_mail_check_addr]-[10.10.101.47]-[20211013_15-46-30]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_mail_check_alltype]-[10.10.101.47]-[20211013_15-51-25]-[passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_mail_check_extend]-[10.10.101.47]-[20211013_15-54-21]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_mail_check_file]-[10.10.101.47]-[20211013_15-59-17]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_mail_check_subject]-[10.10.101.47]-[20211013_16-04-18]-[passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_tcp_basic]-[10.10.101.47]-[20211013_16-09-23]-[passed_failed_passed_passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_tcp_keyword]-[10.10.101.47]-[20211013_16-18-03]-[failed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_tcp_large_file]-[10.10.101.47]-[20211013_16-20-50]-[failed_passed_passed].html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm/[iso_udp]-[10.10.101.47]-[20211013_16-25-10]-[failed].html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Case_rbm/iso_http_large_file/function.py" beforeDir="false" afterPath="$PROJECT_DIR$/Case_rbm/iso_http_large_file/function.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Case_rbm/iso_tcp_basic/function.py" beforeDir="false" afterPath="$PROJECT_DIR$/Case_rbm/iso_tcp_basic/function.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Logs/大版本_1.0.4/rabbitmq.logs" beforeDir="false" afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/rabbitmq.logs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Logs/大版本_1.0.4/result_temp.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Logs/大版本_1.0.4/result_temp.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/common/baseinfo.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/baseinfo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/caseselect_rbm.py" beforeDir="false" afterPath="$PROJECT_DIR$/common/caseselect_rbm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dut_version.txt" beforeDir="false" afterPath="$PROJECT_DIR$/dut_version.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,17 +45,17 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/common" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/Logs/大版本_1.0.4/20211013_11-54-13/rbm" />
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\Projects_Py\auto_test\Logs\大版本_1.0.4\20211013_11-54-13\rbm" />
       <recent name="E:\Projects_Py\auto_test\common" />
       <recent name="E:\Projects_Py\auto_test\Case_rbm" />
       <recent name="E:\Projects_Py\auto_test\data_check" />
       <recent name="E:\Projects_Py\auto_test\Case_rbm\iso_http_large_file" />
-      <recent name="E:\Projects_Py\auto_test\Case_rbm\iso_ftp_large_file" />
     </key>
   </component>
   <component name="RunManager" selected="Python.run">
@@ -148,29 +166,29 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state x="690" y="218" key="FileChooserDialogImpl" timestamp="1633672712392">
+    <state x="690" y="218" key="FileChooserDialogImpl" timestamp="1634112597982">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="690" y="218" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1633672712392" />
-    <state width="1893" height="264" key="GridCell.Tab.0.bottom" timestamp="1632900924708">
+    <state x="690" y="218" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1634112597982" />
+    <state width="1893" height="317" key="GridCell.Tab.0.bottom" timestamp="1634119108304">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1893" height="264" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1632900924708" />
+    <state width="1893" height="317" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1634119108304" />
     <state width="2021" height="476" key="GridCell.Tab.0.bottom/0.0.2048.1112@0.0.2048.1112" timestamp="1630393112115" />
-    <state width="1893" height="264" key="GridCell.Tab.0.center" timestamp="1632900924708">
+    <state width="1893" height="317" key="GridCell.Tab.0.center" timestamp="1634119108304">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1893" height="264" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1632900924708" />
+    <state width="1893" height="317" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1634119108304" />
     <state width="2021" height="476" key="GridCell.Tab.0.center/0.0.2048.1112@0.0.2048.1112" timestamp="1630393112112" />
-    <state width="1893" height="264" key="GridCell.Tab.0.left" timestamp="1632900924708">
+    <state width="1893" height="317" key="GridCell.Tab.0.left" timestamp="1634119108304">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1893" height="264" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1632900924708" />
+    <state width="1893" height="317" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1634119108304" />
     <state width="2021" height="476" key="GridCell.Tab.0.left/0.0.2048.1112@0.0.2048.1112" timestamp="1630393112112" />
-    <state width="1893" height="264" key="GridCell.Tab.0.right" timestamp="1632900924708">
+    <state width="1893" height="317" key="GridCell.Tab.0.right" timestamp="1634119108304">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1893" height="264" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1632900924708" />
+    <state width="1893" height="317" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1634119108304" />
     <state width="2021" height="476" key="GridCell.Tab.0.right/0.0.2048.1112@0.0.2048.1112" timestamp="1630393112113" />
     <state width="1893" height="256" key="GridCell.Tab.1.bottom" timestamp="1631771643775">
       <screen x="0" y="0" width="1920" height="1040" />
@@ -193,10 +211,10 @@
     </state>
     <state x="345" y="78" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1629874343144" />
     <state x="368" y="83" key="SettingsEditor/0.0.2048.1112@0.0.2048.1112" timestamp="1630376011657" />
-    <state x="509" y="139" width="902" height="762" key="find.popup" timestamp="1631609460487">
+    <state x="509" y="139" width="972" height="762" key="find.popup" timestamp="1634109735650">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="509" y="139" width="902" height="762" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1631609460487" />
+    <state x="509" y="139" width="972" height="762" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1634109735650" />
     <state x="539" y="5" width="840" height="1034" key="search.everywhere.popup" timestamp="1631257579832">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

@@ -45,7 +45,7 @@ mail_bcc = ['liwanqiu66@163.com', 'm53667987@163.com']  # 暗送人
 mail_user = "liwanqiu66@163.com"  # 邮件登录地址
 mail_pass = "lwq5945"  # 授权码
 pop3_email = "m53667987@163.com"
-pop3_pwd = "QLOMYDIDADJMOQET"  # 授权码
+pop3_pwd = "PDHATKHYAZHEJOOM"  # 授权码
 
 # ftp相关参数设置
 ftp_proxy_host = "10.10.101.47"
