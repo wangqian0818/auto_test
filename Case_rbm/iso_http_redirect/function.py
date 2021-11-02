@@ -1,39 +1,38 @@
-#encoding='utf-8'
+# encoding='utf-8'
 try:
-	import os,sys,pytest,allure,time,re,time
+    import os, sys, pytest, allure, time, re, time
 except Exception as err:
-	print('导入CPython内置函数库失败!错误信息如下:')
-	print(err)
-	sys.exit(0)#避免程序继续运行造成的异常崩溃,友好退出程序
+    print('导入CPython内置函数库失败!错误信息如下:')
+    print(err)
+    sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
 
-base_path=os.path.dirname(os.path.abspath(__file__))#获取当前项目文件夹
-base_path=base_path.replace('\\','/')
-sys.path.insert(0,base_path)#将当前目录添加到系统环境变量,方便下面导入版本配置等文件
+base_path = os.path.dirname(os.path.abspath(__file__))  # 获取当前项目文件夹
+base_path = base_path.replace('\\', '/')
+sys.path.insert(0, base_path)  # 将当前目录添加到系统环境变量,方便下面导入版本配置等文件
 print(base_path)
 try:
-	from iso_http_redirect import index
-	from iso_http_redirect import message
-	from common import fun
-	import common.ssh as c_ssh
+    from iso_http_redirect import index
+    from iso_http_redirect import message
+    from common import fun
+    import common.ssh as c_ssh
 except Exception as err:
-	print(
-		'导入基础函数库失败!请检查相关文件是否存在.\n文件位于: ' + str(base_path) + '/common/ 目录下.\n分别为:pcap.py  rabbitmq.py  ssh.py\n错误信息如下:')
-	print(err)
-	sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
+    print(
+        '导入基础函数库失败!请检查相关文件是否存在.\n文件位于: ' + str(base_path) + '/common/ 目录下.\n分别为:pcap.py  rabbitmq.py  ssh.py\n错误信息如下:')
+    print(err)
+    sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
 else:
-	del sys.path[0]  # 及时删除导入的环境变量,避免重复导入造成的异常错误
+    del sys.path[0]  # 及时删除导入的环境变量,避免重复导入造成的异常错误
 # import index
 # del sys.path[0]
-#dir_dir_path=os.path.abspath(os.path.join(os.getcwd()))
-#sys.path.append(os.getcwd())
+# dir_dir_path=os.path.abspath(os.path.join(os.getcwd()))
+# sys.path.append(os.getcwd())
 
-from common import clr_env
 from common import baseinfo
+from common import clr_env
 from common.rabbitmq import *
 from data_check import http_check
 
-
-datatime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+datatime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 
 FrontDomain = baseinfo.BG8010FrontDomain
 BackDomain = baseinfo.BG8010BackDomain
@@ -64,7 +63,6 @@ class Test_iso_http_redirect():
         self.case1_step11 = index.case1_step11
         self.http_url = index.http_url
 
-
         clr_env.iso_setup_class(dut='FrontDut')
         clr_env.iso_setup_class(dut='BackDut')
 
@@ -76,10 +74,10 @@ class Test_iso_http_redirect():
         fun.send(rbmExc, message.addhttp_redirect_front['AddCustomAppPolicy'], FrontDomain, base_path)
         fun.send(rbmExc, message.addhttp_redirect_back['AddCustomAppPolicy'], BackDomain, base_path)
         fun.wait_data('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process')
-        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process',name='前置机nginx进程')
+        front_res = fun.nginx_worker('ps -ef |grep nginx', 'FrontDut', 'nginx: worker process', name='前置机nginx进程')
         assert front_res == 1
         fun.wait_data('ps -ef |grep nginx', 'BackDut', 'nginx: worker process')
-        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process',name='后置机nginx进程')
+        back_res = fun.nginx_worker('ps -ef |grep nginx', 'BackDut', 'nginx: worker process', name='后置机nginx进程')
         assert back_res == 1
         # 检查配置下发是否成功
         for key in self.case1_step1:

@@ -23,7 +23,6 @@ class ssh:
         self.channel = ''
         # 实例化对象
         try:
-            # 实例化SSHClient
             self.ssh = paramiko.SSHClient()
         except Exception as err:
             print('调用paramiko.SSHClient()创建ssh连接对象失败!错误内容如下:')
@@ -31,7 +30,6 @@ class ssh:
             sys.exit(0)  # 避免程序继续运行造成的异常崩溃,友好退出程序
         # 将信任的主机添加到host_allow
         try:
-            # 自动添加策略，保存服务器的主机名和密钥信息，如果不添加，那么不再本地know_hosts文件中记录的主机将无法连接
             self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         except Exception as err:
             print('将信任的主机: ' + str(self.hostname) + '添加到host_allow失败!错误内容如下:')
@@ -50,14 +48,12 @@ class ssh:
             # ssh服务器连接状态
             self.__state = 1
             print('ssh连接主机：' + self.hostname + '  完成!')
-        except Exception as err:
-            print("连接 {} 失败: {}".format(self.hostname, err))
-            return False
+        except paramiko.AuthenticationException:
+            print("连接 %s 时，验证失败" % self.hostname)
             sys.exit(1)
         # 更改连接状态：0表示初始化完成，1表示连接成功
         self.__state = 1
         print('ssh服务器: ' + str(self.hostname) + '连接成功')
-        return True
 
     def cmd(self, cmd='ls -l', thread=0, timeout=0, list_flag=False):
         # 查看连接状态
@@ -79,14 +75,65 @@ class ssh:
             return None
         else:
             # try:
+            if list_flag:
+                for i in cmd:
+                    stdin, stdout, stderr = self.ssh.exec_command(command=i, timeout=20)
+                    # 从stdout/stderr/stdin获取共享管道
+                    self.channel = stdout.channel
+
+                    # 不需要stdin
+                    stdin.close()
+                    # 表示我们将不再写该通道
+                    self.channel.shutdown_write()
+
+                    # 读取stdout / stderr以防止读取块挂起
+                    stdout_chunks = []
+                    if list_flag:
+                        for i in range(len(cmd)):
+                            stdout_chunks.append(stdout.channel.recv(65535).decode('utf-8'))
+                    else:
+                        stdout_chunks.append(stdout.channel.recv(65535).decode('utf-8'))
+                    # 分块读取以防止停顿
+                    while not self.channel.closed or self.channel.recv_ready() or self.channel.recv_stderr_ready():
+                        # 如果通道过早关闭并且缓冲区中没有数据，则停止。
+                        got_chunk = False
+                        readq, _, _ = select.select([stdout.channel], [], [], timeout)
+                        for c in readq:
+                            if c.recv_ready():
+                                stdout_chunks.append(stdout.channel.recv(len(c.in_buffer)))
+                                got_chunk = True
+                            if c.recv_stderr_ready():
+                                # 确保读stderr以防止失速
+                                stderr.channel.recv_stderr(len(c.in_stderr_buffer))
+                                got_chunk = True
+                        '''
+                         1）确保输入缓冲区中至少有2个周期没有数据，以免过早退出（例如，大于200k文件的cat）。
+                         2）如果最后一个循环中没有数据到达，请检查是否已经收到退出代码
+                         3）检查输入缓冲区是否为空
+                         4）退出循环
+                        '''
+                        if not got_chunk \
+                                and stdout.channel.exit_status_ready() \
+                                and not stderr.channel.recv_stderr_ready() \
+                                and not stdout.channel.recv_ready():
+                            # 表示我们将不再从该 channel 读
+                            stdout.channel.shutdown_read()
+                            # close the channel
+                            stdout.channel.close()
+                            break  # 当远端完成并且我们的缓冲区为空时退出
+
+                    # print('--------- stdout_chunks:\n{}\n-----------'.format(stdout_chunks))
+                    b = [str(j) for j in stdout_chunks]
+                    # print(b)
+                    out = ''.join(b)
+                    # print('--------- \n', out)
+
+                    # 关闭所有文件描述符
+                    stdout.close()
+                    stderr.close()
+                    return out
+            else:
                 stdin, stdout, stderr = self.ssh.exec_command(command=cmd, timeout=20)
-                if 'jsac-read-db-num.sh' in cmd:
-                    res = stdout.readlines()
-                    new_re = []
-                    for line in res:
-                        # print(line.strip())
-                        new_re.append(line.strip())
-                    return new_re
 
                 # 从stdout/stderr/stdin获取共享管道
                 self.channel = stdout.channel
@@ -340,16 +387,18 @@ class ssh:
 
 if __name__ == '__main__':
     # 连接设备之后必须要有数据传输，否则关闭会有问题
-    hostname = '10.10.88.47'
+    hostname = '10.10.88.26'
     username = "root"
     port = 22
-    password = "1q2w3e"
-    # password = "3e2b6e75b403c492"
+    # password = "1q2w3e"
+    password = "3e2b6e75b403c492"
     ssh = ssh(host=hostname, passwd=password, port=port, name=username)
     ssh.connect()
-    re = ssh.cmd(cmd='cd /opt/pkt/ && wget http://11.11.11.100:8889/vlanA.pdf')
+    # re = ssh.cmd(cmd='cd /opt/pkt/ && wget http://11.11.11.100:8889/vlanA.pdf')
     # re = ssh.cmd(cmd='ps -ef |grep jsac')
     # cmd = ['cd /opt', 'who', 'pwd', 'ls -ahl']
-    # re = ssh.cmd(cmd=cmd, list_flag=True)
+
+    touch_file_cmd = ['cd /opt/pkt', 'dd if=/dev/zero of=10G.txt bs=1M count=10000']
+    re = ssh.cmd(cmd=touch_file_cmd, list_flag=True)
     print("re:\n", re)
     ssh.close()

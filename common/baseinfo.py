@@ -1,7 +1,7 @@
 # encoding='utf-8'
 
 # 以下参数配置仅与执行环境有关，与用例无关
-version = '大版本_1.0.4'  # 版本信息
+version = '大版本_1.0.7'  # 版本信息
 controlIp = '10.10.101.6'
 '''
 mode：代表的是执行ssh类型的链接还是其他的，例如：rabbitmq或其他类型的
@@ -10,7 +10,7 @@ mode：代表的是执行ssh类型的链接还是其他的，例如：rabbitmq�
 同时，需要在common目录下建议caseselect_ssh.py文件，对Case_ssh目录中的单元测试例文件夹进行选择
 其中的ssh是一一对应的'rbm', 'ssh'
 '''
-mode_list = ['rbm', 'ssh']  # 要测试的类型
+mode_list = ['ssh']  # 要测试的类型
 strip = '[]\n'
 qos_port = '8888'
 
@@ -24,7 +24,7 @@ receiver_addr = ["wangqian@jusontech.com"]  # 收件人
 http_url = 'http://10.10.101.47:2287'
 http_proxy_port = 2287
 http_server = '10.10.100.201'
-http_redirect_ip = '10.10.88.22'
+http_redirect_ip = '10.10.101.22'
 http_redirect_port = 8000
 http_server_user = 'root'
 http_server_pass = '1q2w3e4r'
@@ -159,39 +159,39 @@ gwManageCardId = DeviceObject['gateway', 'manageCardId']
 gwVlanCard = DeviceObject['gateway', 'vlanCard']
 gwVlanCardid = DeviceObject['gateway', 'vlanCardid']
 
-# 定义隔离组网
+#定义隔离组网
 BG8010 = {}
-# 隔离client的设置
-BG8010['client', 'manageIp'] = "10.10.101.180"  # 隔离测试客户端管理IP
-BG8010['client', 'loginUser'] = "root"  # 登录账户
-BG8010["client", "loginPwd"] = "3e2b6e75b403c492"  # 登录密码
-BG8010["client", "operationIp"] = "192.168.30.180"  # 设备间通信用的业务IP
+#隔离client的设置
+BG8010['client', 'manageIp']        =           "10.10.101.180"      #隔离测试客户端管理IP
+BG8010['client', 'loginUser']       =           "root"      #登录账户
+BG8010["client", "loginPwd"]        =           "3e2b6e75b403c492"   #登录密码
+BG8010["client", "operationIp"]     =           "192.168.30.180"       #设备间通信用的业务IP
 
-# 隔离server端的设置,101.26上配置好了dns
-BG8010['server', 'manageIp'] = "10.10.101.26"  # 隔离测试服务器端管理IP
-BG8010['server', 'loginUser'] = "root"  # 登录账户
-BG8010["server", "loginPwd"] = "3e2b6e75b403c492"  # 登录密码
-BG8010["server", "operationIp"] = "192.168.50.26"  # 设备间通信用的业务IP
+#隔离server端的设置,101.26上配置好了dns
+BG8010['server', 'manageIp']        =           "10.10.101.26"      #隔离测试服务器端管理IP
+BG8010['server', 'loginUser']       =           "root"      #登录账户
+BG8010["server", "loginPwd"]        =           "3e2b6e75b403c492"   #登录密码
+BG8010["server", "operationIp"]     =           "192.168.50.26"       #设备间通信用的业务IP
 
-# 隔离设备端的设置
-BG8010['front_dut', 'manageIp'] = "10.10.101.54"  # 隔离测试前置机管理IP
-BG8010['front_dut', 'loginUser'] = "root"  # 登录账户
-BG8010["front_dut", "loginPwd"] = "1q2w3e"  # 登录密码
-BG8010["front_dut", "operationIp"] = "192.168.30.54"  # 设备间通信用的业务IP
-BG8010["front_dut", "operationIfname"] = "enp60s0f00"  # 设备接口名
+#隔离设备端的设置
+BG8010['front_dut', 'manageIp']        =           "10.10.101.111"      #隔离测试前置机管理IP
+BG8010['front_dut', 'loginUser']       =           "root"      #登录账户
+BG8010["front_dut", "loginPwd"]        =           "1q2w3e"   #登录密码
+BG8010["front_dut", "operationIp"]     =           "192.168.30.111"       #设备间通信用的业务IP
+BG8010["front_dut", "operationIfname"]     =           "enp60s0f00"       #设备接口名
 BG8010["front_dut", "operationNum"] = "2"  # 该业务ip所在的接口号，从1开始排序
-BG8010["front_dut", "domain"] = "hf.f1203.g01.cs_17.a54"  # 前置机domain
-BG8010["front_dut", "cardid"] = "CS807304LV200A1N019"  # 前置机安全卡code
+BG8010["front_dut", "domain"]          =           "hf.f1203.g01.cs_17.iso111"    #前置机domain
+BG8010["front_dut", "cardid"]          =           "CS807304LV200A1N038"    #前置机安全卡code
 
-BG8010['back_dut', 'manageIp'] = "10.10.101.57"  # 隔离测试后置机管理IP
-BG8010['back_dut', 'loginUser'] = "root"  # 登录账户
-BG8010["back_dut", "loginPwd"] = "1q2w3e"  # 登录密码
-BG8010["back_dut", "operationIpInside"] = "192.168.50.57"  # 设备间通信用的内网业务IP
-BG8010["back_dut", "operationIfnameInside"] = "enp60s0f00"  # 内网业务ip对应的接口名
-BG8010["back_dut", "operationIpOutside"] = "10.10.101.57"  # 设备间通信用的外网业务IP
-BG8010["back_dut", "operationIfnameOutside"] = "enp60s0f01"  # 外网业务ip对应的接口名
-BG8010["back_dut", "domain"] = "hf.f1203.g01.cs_17.wg57"  # 后置机domain
-BG8010["back_dut", "cardid"] = "CS807304LV2008CN014"  # 后置机安全卡code
+BG8010['back_dut', 'manageIp']        =           "10.10.101.112"      #隔离测试后置机管理IP
+BG8010['back_dut', 'loginUser']       =           "root"      #登录账户
+BG8010["back_dut", "loginPwd"]        =           "1q2w3e"   #登录密码
+BG8010["back_dut", "operationIpInside"]     =           "192.168.50.112"       #设备间通信用的内网业务IP
+BG8010["back_dut", "operationIfnameInside"]     =           "enp60s0f00"       #内网业务ip对应的接口名
+BG8010["back_dut", "operationIpOutside"]     =           "10.10.101.112"       #设备间通信用的外网业务IP
+BG8010["back_dut", "operationIfnameOutside"]     =           "enp60s0f01"       #外网业务ip对应的接口名
+BG8010["back_dut", "domain"]          =           "hf.f1203.g01.cs_17.iso112"      #后置机domain
+BG8010["back_dut", "cardid"]          =           "CS807304LV200A1N033"      #后置机安全卡code
 
 # 隔离client的设置
 BG8010ClientIp = BG8010['client', 'manageIp']
